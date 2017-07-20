@@ -10,7 +10,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 	mockset = mimock.mockset;
 	require('chai-jasmine');
 } else {
-	mockset = window.mockset;
+	mockset = window.mimock.mockset;
 }
 
 

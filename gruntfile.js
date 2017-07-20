@@ -38,6 +38,7 @@ module.exports = function(grunt) {
 			options: {
 				esversion: 6,
 				laxbreak: true,
+				'-W058': true,
 				globals: {
 					jQuery:   true,
 					console:  true,

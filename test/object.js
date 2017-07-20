@@ -10,7 +10,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 	mockset = mimock.mockset;
 	require('chai-jasmine');
 } else {
-	mockset = window.mockset;
+	mockset = window.mimock.mockset;
 }
 
 
@@ -56,6 +56,7 @@ describe('object', function () {
 				foo: function () {},
 				});
 			let mm_obj = mocks.object(test_state_obj);
+			mocks.restore();
 		});
 
 		it('with non object fails', function (done) {
@@ -68,6 +69,7 @@ describe('object', function () {
 				else
 					throw err;
 			}
+			mocks.restore();
 		});
 
 		it('is per object', function () {
@@ -83,6 +85,7 @@ describe('object', function () {
 			let mm_obj3 = mocks.object(test_state_obj_b);
 			expect(mm_obj1).toBe(mm_obj2);
 			expect(mm_obj1).not.toBe(mm_obj3);
+			mocks.restore();
 		});
 
 	});
@@ -254,17 +257,6 @@ describe('object', function () {
 		});
 
 		describe('wrap', function () {
-
-			it('is called', function (done) {
-				let mocks = new mockset();
-				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
-				let mm_method = mocks.o(test_state_obj).m('update');
-				mm_method.wrap(function () {
-					done();
-				});
-				test_state_obj.update({aa:'a3'});
-				mocks.restore();
-			});
 
 			it('is called', function (done) {
 				let mocks = new mockset();

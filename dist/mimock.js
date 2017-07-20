@@ -1,4 +1,4 @@
-// Package: mimock v0.1.0 (built 2017-07-18 09:41:07)
+// Package: mimock v0.2.0 (built 2017-07-20 22:24:41)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
@@ -15,6 +15,7 @@ let mimock_mockset = (function () {
 	let mimock_mockset = function mimock_mockset () {
 
 		this.mm_objs = [];
+		this.mm_funs = [];
 
 	};
 
@@ -59,11 +60,34 @@ let mimock_mockset = (function () {
 	mimock_mockset.prototype.o = mimock_mockset.prototype.object;
 
 
+	mimock_mockset.prototype.fun = function (fun) {
+
+		if (typeof fun !== 'function')
+			throw new Error('not a function');
+
+		for (let i = 0; i < this.mm_funs.length; i++)
+			if (this.mm_funs[i].orig_fun === fun)
+				return this.mm_funs[i];
+
+		let mm_fun = new mimock_fun(this, fun);
+		this.mm_funs.push(mm_fun);
+
+		return mm_fun;
+
+	};
+
+	mimock_mockset.prototype.f = mimock_mockset.prototype.fun;
+
+
 	mimock_mockset.prototype.restore = function () {
 
 		let mm_objs = this.mm_objs;
 		for (let i = mm_objs.length-1; i >= 0; i--)
 			mm_objs[i].restore();
+
+		let mm_funs = this.mm_funs;
+		for (let i = mm_funs.length-1; i >= 0; i--)
+			mm_funs[i].restore();
 
 	};
 
@@ -137,8 +161,9 @@ let mimock_method = (function () {
 
 		let mm_method = this;
 		raw_obj[this.method_name] = function () {
-			return mm_method.entry(Array.prototype.slice.call(arguments));
+			return mm_method.entry(Array.prototype.slice.call(arguments), this !== raw_obj);
 		};
+		Object.defineProperty(raw_obj[this.method_name], 'name', {value:this.orig_fun.name});
 
 	};
 
@@ -150,7 +175,7 @@ let mimock_method = (function () {
 			args:   args,
 			};
 
-		let helper = new mimock_wrap_helper(this, args);
+		let helper = new mimock_method_wrap_helper(this, args);
 
 		let retval;
 		let exception;
@@ -177,6 +202,8 @@ let mimock_method = (function () {
 	mimock_method.prototype.wrap = function (wrap_fun) {
 
 		this.wrap_chain.push(wrap_fun);
+
+		return this;
 
 	};
 
@@ -211,10 +238,10 @@ let mimock_method = (function () {
 })();
 
 
-let mimock_wrap_helper = (function () {
+let mimock_method_wrap_helper = (function () {
 
 
-	let mimock_wrap_helper = function mimock_wrap_helper (mm_method, method_args) {
+	let mimock_method_wrap_helper = function mimock_method_wrap_helper (mm_method, method_args) {
 
 		this.mm_method = mm_method;
 		this.mm_obj    = mm_method.mm_obj;
@@ -224,7 +251,7 @@ let mimock_wrap_helper = (function () {
 	};
 
 
-	mimock_wrap_helper.prototype.continue = function () {
+	mimock_method_wrap_helper.prototype.continue = function () {
 
 		if (this.wrap_num == 0)
 			return this.mm_method.orig_fun.apply(this.mm_obj.raw_obj, this.args);
@@ -236,7 +263,136 @@ let mimock_wrap_helper = (function () {
 	};
 
 
-	return mimock_wrap_helper;
+	return mimock_method_wrap_helper;
+
+
+})();
+
+
+let mimock_fun = (function () {
+
+
+	let mimock_fun = function mimock_fun (mm_set, orig_fun) {
+
+		this.mm_set     = mm_set;
+		this.orig_fun   = orig_fun;
+		this.wrap_chain = [];
+		this.call_hist  = [];
+		this.active     = true;
+
+		let mm_fun = this;
+		this.repl_fun = function () {
+			return mm_fun.active
+				? mm_fun.entry(this, Array.prototype.slice.call(arguments))
+				: mm_fun.orig_fun.apply(this, arguments);
+		};
+		Object.defineProperty(this.repl_fun, 'name', {value:this.orig_fun.name});
+
+	};
+
+
+	mimock_fun.prototype.replacement = function () {
+
+		return this.repl_fun;
+
+	};
+
+
+	mimock_fun.prototype.entry = function (fun_bind, args) {
+
+		let result = {
+			called: new Date(),
+			args:   args,
+			};
+
+		let helper = new mimock_fun_wrap_helper(this, fun_bind, args);
+
+		let retval;
+		let exception;
+		try {
+			retval = helper.continue();
+		} catch (caught) {
+			exception = caught;
+		}
+
+		result.returned = new Date();
+		this.call_hist.push(result);
+
+		if (typeof exception === 'undefined') {
+			result.retval = retval;
+			return retval;
+		} else {
+			result.exception = exception;
+			throw exception;
+		}
+
+	};
+
+
+	mimock_fun.prototype.wrap = function (wrap_fun) {
+
+		this.wrap_chain.push(wrap_fun);
+
+		return this;
+
+	};
+
+
+	mimock_fun.prototype.call_count = function () {
+
+		return this.call_hist.length;
+
+	};
+
+
+	mimock_fun.prototype.calls = function () {
+
+		return this.call_hist;
+
+	};
+
+
+	mimock_fun.prototype.restore = function () {
+
+		this.active     = false;
+		this.wrap_chain = [];
+
+	};
+
+
+	return mimock_fun;
+
+
+})();
+
+
+let mimock_fun_wrap_helper = (function () {
+
+
+	let mimock_fun_wrap_helper = function mimock_fun_wrap_helper (mm_fun, fun_bind, fun_args) {
+
+		this.mm_fun   = mm_fun;
+		this.mm_obj   = mm_fun.mm_obj;
+		this.fun_bind = fun_bind;
+		this.args     = fun_args;
+		this.wrap_num = mm_fun.wrap_chain.length;
+
+	};
+
+
+	mimock_fun_wrap_helper.prototype.continue = function () {
+
+		if (this.wrap_num == 0)
+			return this.mm_fun.orig_fun.apply(this.fun_bind, this.args);
+
+		this.wrap_num--;
+
+		return this.mm_fun.wrap_chain[this.wrap_num].apply(this.fun_bind, [this]);
+
+	};
+
+
+	return mimock_fun_wrap_helper;
 
 
 })();
@@ -247,8 +403,10 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 		mockset: mimock_mockset,
 	};
 } else {
-	window.mockset = mimock_mockset;
+	window.mimock = {
+		mockset: mimock_mockset,
+		};
 }
 
 
-}) ();
+})();
