@@ -4,14 +4,12 @@
 "use strict";
 
 
-let mockset;
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-	let mimock  = require('./../dist/mimock.js');
-	mockset = mimock.mockset;
+let mimock  = require('./../dist/mimock.js');
+let mockset = mimock.mockset;
+
+if (typeof window === 'undefined')
 	require('chai-jasmine');
-} else {
-	mockset = window.mimock.mockset;
-}
+
 
 describe('readme', function () {
 

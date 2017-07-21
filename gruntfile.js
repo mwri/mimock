@@ -1,3 +1,5 @@
+var path = require('path');
+
 module.exports = function(grunt) {
 
 	require('load-grunt-tasks')(grunt);
@@ -12,24 +14,9 @@ module.exports = function(grunt) {
 				stripBanners: { line: true },
 				banner: '// Package: <%= pkg.name %> v<%= pkg.version %> (built <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %>)\n// Copyright: (C) 2017 <%= pkg.author.name %> <<%= pkg.author.email %>>\n// License: <%= pkg.license %>\n\n\n',
 			},
-			es5: {
-				src: ['lib/**/*.js'],
-				dest: 'dist/<%= pkg.name %>_es5.js',
-			},
 			es6: {
 				src: ['lib/**/*.js'],
 				dest: 'dist/<%= pkg.name %>.js',
-			},
-		},
-
-		uglify: {
-			options: {
-				banner: '// Package: <%= pkg.name %> v<%= pkg.version %> (built <%= grunt.template.today("yyyy-mm-dd HH:MM:ss") %>)\n// Copyright: (C) 2017 <%= pkg.author.name %> <<%= pkg.author.email %>>\n// License: <%= pkg.license %>\n',
-			},
-			build: {
-				files: {
-					'dist/<%= pkg.name %>_es5.min.js': ['<%= concat.es5.dest %>']
-				},
 			},
 		},
 
@@ -37,8 +24,8 @@ module.exports = function(grunt) {
 			files: ['gruntfile.js', 'lib/**/*.js', 'test/**/*.js'],
 			options: {
 				esversion: 6,
-				laxbreak: true,
-				'-W058': true,
+				laxbreak:  true,
+				'-W058':   true,
 				globals: {
 					jQuery:   true,
 					console:  true,
@@ -49,29 +36,9 @@ module.exports = function(grunt) {
 		},
 
 		karma: {
-			es5: {
-				options: {
-					files: [
-						'dist/mimock_es5.min.js',
-						'test/**/*.js',
-					],
-					basePath:    '',
-					urlRoot:     '/',
-					frameworks:  ['jasmine'],
-					port:        9876,
-					colors:      true,
-					autoWatch:   false,
-					interval:    200,
-					singleRun:   true,
-					browsers:    ['ChromeHeadless'],
-					reporters:     ['spec'],
-					concurrency: Infinity,
-				},
-			},
 			es6: {
 				options: {
 					files: [
-						'dist/mimock.js',
 						'test/**/*.js',
 					],
 					basePath:    '',
@@ -83,44 +50,17 @@ module.exports = function(grunt) {
 					interval:    200,
 					singleRun:   true,
 					browsers:    ['ChromeHeadless'],
-					reporters:     ['spec', 'coverage'],
-					preprocessors: { 'dist/mimock.js': ['coverage'] },
-					concurrency: Infinity,
-					coverageReporter: {
-						type : 'lcov',
-						subdir: 'karma/',
-					},
-				},
-			},
-			travis_ci_es5: {
-				options: {
-					files: [
-						'dist/mimock_es5.min.js',
-						'test/**/*.js',
-					],
-					basePath:    '',
-					urlRoot:     '/',
-					frameworks:  ['jasmine'],
-					port:        9876,
-					colors:      true,
-					autoWatch:   false,
-					interval:    200,
-					singleRun:   true,
-					browsers:    ['ChromeTravisCI'],
 					reporters:     ['spec'],
+					preprocessors: {
+						'test/**/*.js':   ['webpack'],
+						},
 					concurrency: Infinity,
-					customLaunchers: {
-						ChromeTravisCI: {
-							base:  'Chrome',
-							flags: ['--no-sandbox']
-						}
-					},
+					webpack: require('./webpack.config.js'),
 				},
 			},
 			travis_ci_es6: {
 				options: {
 					files: [
-						'dist/mimock.js',
 						'test/**/*.js',
 					],
 					basePath:    '',
@@ -132,14 +72,12 @@ module.exports = function(grunt) {
 					interval:    200,
 					singleRun:   true,
 					browsers:    ['ChromeTravisCI'],
-					reporters:     ['spec', 'coverage'],
-					preprocessors: { 'dist/mimock.js': ['coverage'] },
+					reporters:     ['spec'],
+					preprocessors: {
+						'test/**/*.js':   ['webpack'],
+						},
 					concurrency: Infinity,
-					coverageReporter: {
-						type:   'lcovonly',
-						file:   'lcov.info',
-						subdir: 'karma/',
-					},
+					webpack: require('./webpack.config.js'),
 					customLaunchers: {
 						ChromeTravisCI: {
 							base:  'Chrome',
@@ -152,50 +90,21 @@ module.exports = function(grunt) {
 
 		node_mocha: {
 			es6: {
-				src : ['test/**/*.js'],
-				options : {
+				src: ['test/**/*.js'],
+				options: {
 					slow: 3000,
 					timeout: 5000,
-					reportFormats : ['lcov'],
-					coverageFolder: 'coverage/node/',
-					runCoverage : true,
+					reportFormats:  ['lcov'],
+					runCoverage:    true,
 				},
 			},
 			es6_nocov: {
-				src : ['test/**/*.js'],
-				options : {
-					slow:           3000,
-					timeout:        5000,
-					fullTrace:      true,
+				src:  ['test/**/*.js'],
+				options: {
+					slow:      3000,
+					timeout:   5000,
+					fullTrace: true,
 				},
-			},
-			travis_ci_es6: {
-				src : ['test/**/*.js'],
-				options : {
-					slow: 3000,
-					timeout: 5000,
-					reportFormats : ['lcovonly'],
-					coverageFolder: 'coverage/node/',
-					runCoverage : true,
-				},
-			},
-		},
-
-		babel: {
-			options: {
-				presets: ['es2015'],
-			},
-			build: {
-				files: {
-					'dist/mimock_es5.js': 'dist/mimock_es5.js',
-				},
-			},
-		},
-
-		lcovMerge: {
-			emitters: 'coverage/*/lcov.info',
-			options: {
-				outputFile: 'coverage/lcov.info',
 			},
 		},
 
@@ -226,25 +135,16 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('build', [
 		'jshint',
-		'concat:es5',
 		'concat:es6',
-		'babel',
-		'uglify',
-		'karma:es5',
 		'karma:es6',
 		'node_mocha:es6',
 		]);
 
 	grunt.registerTask('travis_ci_build', [
 		'jshint',
-		'concat:es5',
 		'concat:es6',
-		'babel',
-		'uglify',
-		'karma:travis_ci_es5',
 		'karma:travis_ci_es6',
-		'node_mocha:travis_ci_es6',
-		'lcovMerge',
+		'node_mocha:es6',
 		]);
 
 	grunt.registerTask('dev', [

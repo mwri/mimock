@@ -255,45 +255,14 @@ wrapper modifies the arguments, the second gets the modifications and sees
 nothing of the originals. If the first returns (as a stub), or throws an
 exception, the second wrapper will never see the light of day.
 
-## NodeJS and browser usage
-
-Mimock works in node, just require it and access the `mocker` and `mockset`
-elements:
-
-```javascript
-let mimock  = require('mimock');
-
-let mocker  = mimock.mocker;
-let mockset = mimock.mockset;
-```
-
-Mimock works in client side in at least most browsers as well, either
-incorporate it with webpack or similar, or just load it, something like
-this:
-
-```html
-<script src="lib/minimock/dist/minimock.js"></script>
-```
-Both `mocker` and `mockset` will be imported (added to window).
-
-## Dist files
-
-The `dist` folder has the following files available:
-
-File | Description
-:-- | :--
-mimock.js | Limited ES6 features (works with Node.js v4+ and most browsers)
-mimock_es5.js | ES5 translation (should work with anything)
-mimock_es5.min.js | Minified ES5 translation
-
 ## Build
 
 run `npm install` to install the dev/build dependencies, and
 `grunt build` to build.
 
-This will create ES5 `dist/mimock.js` and `dist/mimock.min.js`
-files, and run the unit tests against them.
+This will build `dist/mimock.js` and run the unit tests in a webpack bundle
+using Chrome, and again via mocha.
 
-Running `grunt watch_dev` will invoke an ES6 NodeJS only continuous
-file watch build test cycle, and generate coverage reports. Running
-`grunt watch_full` will watch for file changes and do a full build.
+Running `grunt watch_dev` will invoke the most light weight possible file
+watch lint build and test cycle (using mocha). Running `grunt watch_full`
+will watch for file changes and do a full build including coverage reports.

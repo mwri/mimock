@@ -1,4 +1,4 @@
-// Package: mimock v0.2.0 (built 2017-07-20 22:24:41)
+// Package: mimock v0.2.0 (built 2017-07-21 09:29:24)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
@@ -398,15 +398,9 @@ let mimock_fun_wrap_helper = (function () {
 })();
 
 
-if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
-	module.exports = {
-		mockset: mimock_mockset,
+module.exports = {
+	mockset: mimock_mockset,
 	};
-} else {
-	window.mimock = {
-		mockset: mimock_mockset,
-		};
-}
 
 
 })();
