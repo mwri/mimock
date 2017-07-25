@@ -120,7 +120,7 @@ describe('function', function () {
 			mocks.restore();
 		});
 
-		it('stops after mocks restore', function () {
+		it('stops after set restore', function () {
 			let mocks = new mockset();
 			let test_fun1 = function (a) { return a * 2; };
 			let mm_fun1 = mocks.f(test_fun1);

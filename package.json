@@ -23,6 +23,7 @@
     "grunt-mocha-istanbul": "^5.0.2",
     "grunt-node-mocha": "^0.1.3",
     "grunt-simple-mocha": "^0.4.1",
+    "grunt-strip-code": "^1.0.6",
     "istanbul": "^0.4.5",
     "jasmine-core": "^2.6.4",
     "karma": "^1.7.0",
@@ -31,6 +32,8 @@
     "karma-spec-reporter": "0.0.31",
     "karma-webpack": "^2.0.4",
     "load-grunt-tasks": "^3.5.2",
+    "polylock": "^1.0.5",
+    "testob": "^0.1.1",
     "webpack": "^3.3.0"
   },
   "url": "https://github.com/mwri/mimock",
@@ -45,7 +48,9 @@
     "lib": "lib",
     "test": "test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "intercept-require": "^1.1.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mwri/mimock.git"

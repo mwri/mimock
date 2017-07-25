@@ -1,4 +1,4 @@
-// Package: mimock v0.2.0 (built 2017-07-21 09:29:24)
+// Package: mimock v0.2.0 (built 2017-07-25 13:50:21)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
@@ -15,6 +15,7 @@ let mimock_mockset = (function () {
 	let mimock_mockset = function mimock_mockset () {
 
 		this.mm_objs = [];
+		this.mm_libs = [];
 		this.mm_funs = [];
 
 	};
@@ -60,6 +61,25 @@ let mimock_mockset = (function () {
 	mimock_mockset.prototype.o = mimock_mockset.prototype.object;
 
 
+	mimock_mockset.prototype.library = function (lib_path) {
+
+		if (typeof lib_path !== 'string')
+			throw new Error('not a library/package path/name');
+
+		for (let i = 0; i < this.mm_libs.length; i++)
+			if (this.mm_libs[i].lib_path === lib_path)
+				return this.mm_libs[i];
+
+		let mm_lib = new mimock_lib(this, lib_path);
+		this.mm_libs.push(mm_lib);
+
+		return mm_lib;
+
+	};
+
+	mimock_mockset.prototype.l = mimock_mockset.prototype.library;
+
+
 	mimock_mockset.prototype.fun = function (fun) {
 
 		if (typeof fun !== 'function')
@@ -84,6 +104,10 @@ let mimock_mockset = (function () {
 		let mm_objs = this.mm_objs;
 		for (let i = mm_objs.length-1; i >= 0; i--)
 			mm_objs[i].restore();
+
+		let mm_libs = this.mm_libs;
+		for (let i = mm_libs.length-1; i >= 0; i--)
+			mm_libs[i].restore();
 
 		let mm_funs = this.mm_funs;
 		for (let i = mm_funs.length-1; i >= 0; i--)
@@ -161,21 +185,24 @@ let mimock_method = (function () {
 
 		let mm_method = this;
 		raw_obj[this.method_name] = function () {
-			return mm_method.entry(Array.prototype.slice.call(arguments), this !== raw_obj);
+			return mm_method.entry(this, Array.prototype.slice.call(arguments), this !== raw_obj);
 		};
 		Object.defineProperty(raw_obj[this.method_name], 'name', {value:this.orig_fun.name});
 
 	};
 
 
-	mimock_method.prototype.entry = function (args) {
+	mimock_method.prototype.entry = function (this_bind, args, as_cons) {
 
 		let result = {
 			called: new Date(),
 			args:   args,
 			};
 
-		let helper = new mimock_method_wrap_helper(this, args);
+		let helper = new mimock_wrap_helper(this_bind, args, as_cons, this.wrap_chain, this.orig_fun);
+
+		if (!this.active)
+			return helper.continue();
 
 		let retval;
 		let exception;
@@ -224,6 +251,9 @@ let mimock_method = (function () {
 
 	mimock_method.prototype.restore = function () {
 
+		if (!this.active)
+			return;
+
 		this.mm_obj.raw_obj[this.method_name] = this.orig_fun;
 
 		this.active     = false;
@@ -238,32 +268,45 @@ let mimock_method = (function () {
 })();
 
 
-let mimock_method_wrap_helper = (function () {
+let mimock_wrap_helper = (function () {
 
 
-	let mimock_method_wrap_helper = function mimock_method_wrap_helper (mm_method, method_args) {
+	let mimock_wrap_helper = function mimock_wrap_helper (
+			this_bind, args, as_cons,
+			wrap_chain, orig_fun
+			) {
 
-		this.mm_method = mm_method;
-		this.mm_obj    = mm_method.mm_obj;
-		this.args      = method_args;
-		this.wrap_num  = mm_method.wrap_chain.length;
+		this.this_bind = this_bind;
+		this.args      = args;
+		this.as_cons   = as_cons;
+		this.wrap_chain= wrap_chain;
+		this.wrap_num  = wrap_chain.length;
+		this.orig_fun  = orig_fun;
 
 	};
 
 
-	mimock_method_wrap_helper.prototype.continue = function () {
+	mimock_wrap_helper.prototype.continue = function () {
+
+		function call_cons (cons_fun, args) {
+			let cons_args = args.slice();
+			cons_args.unshift(undefined);
+			return new (Function.prototype.bind.apply(cons_fun, cons_args));
+		}
 
 		if (this.wrap_num == 0)
-			return this.mm_method.orig_fun.apply(this.mm_obj.raw_obj, this.args);
+			return this.as_cons
+				? call_cons(this.orig_fun, this.args)
+				: this.orig_fun.apply(this.this_bind, this.args);
 
 		this.wrap_num--;
 
-		return this.mm_method.wrap_chain[this.wrap_num].apply(this.mm_obj.raw_obj, [this]);
+		return this.wrap_chain[this.wrap_num].apply(this.this_bind, [this]);
 
 	};
 
 
-	return mimock_method_wrap_helper;
+	return mimock_wrap_helper;
 
 
 })();
@@ -282,9 +325,7 @@ let mimock_fun = (function () {
 
 		let mm_fun = this;
 		this.repl_fun = function () {
-			return mm_fun.active
-				? mm_fun.entry(this, Array.prototype.slice.call(arguments))
-				: mm_fun.orig_fun.apply(this, arguments);
+			return mm_fun.entry(this, Array.prototype.slice.call(arguments), this instanceof mm_fun.repl_fun);
 		};
 		Object.defineProperty(this.repl_fun, 'name', {value:this.orig_fun.name});
 
@@ -298,14 +339,19 @@ let mimock_fun = (function () {
 	};
 
 
-	mimock_fun.prototype.entry = function (fun_bind, args) {
+	mimock_fun.prototype.entry = function (this_bind, args, as_cons) {
+
+		let helper = new mimock_wrap_helper(this_bind, args, as_cons, this.wrap_chain, this.orig_fun);
+
+		if (!this.active)
+			return helper.continue();
 
 		let result = {
 			called: new Date(),
 			args:   args,
 			};
 
-		let helper = new mimock_fun_wrap_helper(this, fun_bind, args);
+		this.call_hist.push(result);
 
 		let retval;
 		let exception;
@@ -316,7 +362,6 @@ let mimock_fun = (function () {
 		}
 
 		result.returned = new Date();
-		this.call_hist.push(result);
 
 		if (typeof exception === 'undefined') {
 			result.retval = retval;
@@ -366,33 +411,277 @@ let mimock_fun = (function () {
 })();
 
 
-let mimock_fun_wrap_helper = (function () {
+let mimock_lib = (function () {
 
 
-	let mimock_fun_wrap_helper = function mimock_fun_wrap_helper (mm_fun, fun_bind, fun_args) {
+	let mimock_lib = function mimock_lib (mm_set, lib_path) {
 
-		this.mm_fun   = mm_fun;
-		this.mm_obj   = mm_fun.mm_obj;
-		this.fun_bind = fun_bind;
-		this.args     = fun_args;
-		this.wrap_num = mm_fun.wrap_chain.length;
+		this.mm_set     = mm_set;
+		this.lib_path   = lib_path;
+		this.req_count  = 0;
+		this.mm_exports = [];
+		this.instances  = [];
+
+		function require_handler (module_exports, module_info) {
+
+			if (module_info.error !== null)
+				throw module_info.error;
+
+			if (module_info.moduleId === lib_path) {
+				this.req_count++;
+				let inst = new mimock_lib_inst(this, module_exports);
+				module_exports = inst.module_exports();
+				this.instances.push(inst);
+			}
+
+			return module_exports;
+
+		}
+
+		let intercept_require = require("intercept-require");
+		this.ir_restore = intercept_require(require_handler.bind(this));
+
+		this.export(undefined);
 
 	};
 
 
-	mimock_fun_wrap_helper.prototype.continue = function () {
+	mimock_lib.prototype.require_count = function () {
 
-		if (this.wrap_num == 0)
-			return this.mm_fun.orig_fun.apply(this.fun_bind, this.args);
-
-		this.wrap_num--;
-
-		return this.mm_fun.wrap_chain[this.wrap_num].apply(this.fun_bind, [this]);
+		return this.req_count;
 
 	};
 
 
-	return mimock_fun_wrap_helper;
+	mimock_lib.prototype.restore = function () {
+
+		for (let i = 0; i < this.instances.length; i++)
+			this.instances[i].restore();
+
+		for (let i = 0; i < this.mm_exports.length; i++)
+			this.mm_exports[i].restore();
+
+		this.instances  = [];
+		this.mm_exports = [];
+
+		this.ir_restore();
+
+	};
+
+
+	mimock_lib.prototype.export = function (export_name) {
+
+		if (typeof export_name !== 'string' && typeof export_name !== 'undefined')
+			throw new Error('not an export name and not undefined');
+
+		for (let i = 0; i < this.mm_exports.length; i++)
+			if (this.mm_exports[i].export_name === export_name)
+				return this.mm_exports[i];
+
+		let mm_export = new mimock_export(this.mm_set, this, export_name);
+		this.mm_exports.push(mm_export);
+
+		return mm_export;
+
+	};
+
+	mimock_lib.prototype.e = mimock_lib.prototype.export;
+
+
+	return mimock_lib;
+
+
+})();
+
+
+let mimock_lib_inst = (function () {
+
+
+	let mimock_lib_inst = function mimock_lib_inst (mm_lib, module_exports) {
+
+		this.inst_of      = mm_lib;
+		this.export_insts = [];
+		this.repl_exports = module_exports;
+
+		for (let i = 0; i < mm_lib.mm_exports.length; i++) {
+			let mm_export = mm_lib.mm_exports[i];
+			let exp_inst = new mimock_export_inst(mm_export, this.repl_exports);
+			mm_export.instances.push(exp_inst);
+			this.export_insts.push(exp_inst);
+			this.repl_exports = exp_inst.module_exports();
+		}
+
+	};
+
+
+	mimock_lib_inst.prototype.module_exports = function () {
+
+		return this.repl_exports;
+
+	};
+
+
+	mimock_lib_inst.prototype.restore = function () {
+
+		for (let i = 0; i < this.export_insts.length; i++)
+			this.export_insts[i].restore();
+
+		this.export_insts = [];
+
+	};
+
+
+	return mimock_lib_inst;
+
+
+})();
+
+
+let mimock_export = (function () {
+
+
+	let mimock_export = function mimock_export (mm_set, mm_lib, export_name) {
+
+		this.mm_set      = mm_set;
+		this.mm_lib      = mm_lib;
+		this.instances   = [];
+		this.export_name = export_name;
+		this.wrap_funs   = [];
+		this.active      = true;
+
+		for (let i = 0; i < mm_lib.instances.length; i++) {
+			let lib_inst = mm_lib.instances[i];
+			let exp_inst = new mimock_export_inst(this, lib_inst.module_exports());
+			lib_inst.repl_exports = lib_inst.module_exports();
+			this.instances.push(exp_inst);
+			lib_inst.export_insts.push(exp_inst);
+		}
+
+	};
+
+
+	mimock_export.prototype.wrap = function (fun) {
+
+		this.wrap_funs.push(fun);
+
+		return this;
+
+	};
+
+
+	mimock_export.prototype.call_count = function () {
+
+		let call_count = 0;
+		for (let i = 0; i < this.instances.length; i++)
+			call_count += this.instances[i].call_count();
+
+		return call_count;
+
+	};
+
+
+	mimock_export.prototype.calls = function () {
+
+		let call_hist = [];
+		for (let i = 0; i < this.instances.length; i++) {
+			let inst = this.instances[i];
+			let inst_call_hist = inst.calls();
+			for (let j = 0; j < inst_call_hist.length; j++)
+				call_hist.push(inst_call_hist[j]);
+		}
+
+		return call_hist;
+
+	};
+
+
+	mimock_export.prototype.restore = function () {
+
+		for (let i = 0; i < this.instances.length; i++)
+			this.instances[i].restore();
+
+		this.active    = false;
+		this.wrap_funs = [];
+
+	};
+
+
+	return mimock_export;
+
+
+})();
+
+
+let mimock_export_inst = (function () {
+
+
+	let mimock_export_inst = function mimock_export_inst (mm_export, module_exports) {
+
+		let wrap;
+		if (typeof module_exports === 'function') {
+			if (typeof mm_export.export_name === 'undefined') {
+				wrap = mm_export.mm_set.f(module_exports);
+				module_exports = wrap.replacement();
+			}
+		} else if (typeof module_exports === 'object') {
+			let export_name = mm_export.export_name;
+			if (typeof export_name !== 'undefined')
+				if (export_name in module_exports)
+					wrap = mm_export.mm_set.o(module_exports).m(export_name);
+		}
+
+		this.inst_of      = mm_export;
+		this.repl_exports = module_exports;
+		this.wrap         = wrap;
+		this.active       = true;
+
+		if (mm_export.wrap_funs.length === 0)
+			return;
+
+		let mm_export_inst = this;
+
+		for (let i = 0; i < mm_export.wrap_funs.length; i++)
+			wrap.wrap(mm_export.wrap_funs[i]);
+
+	};
+
+
+	mimock_export_inst.prototype.module_exports = function () {
+
+		return this.repl_exports;
+
+	};
+
+
+	mimock_export_inst.prototype.call_count = function () {
+
+		return typeof this.wrap !== 'undefined'
+			? this.wrap.call_count()
+			: 0;
+
+	};
+
+
+	mimock_export_inst.prototype.calls = function () {
+
+		return typeof this.wrap !== 'undefined'
+			? this.wrap.calls()
+			: [];
+
+	};
+
+
+	mimock_export_inst.prototype.restore = function () {
+
+		if (typeof this.wrap !== 'undefined')
+			this.wrap.restore();
+
+		this.active = false;
+
+	};
+
+
+	return mimock_export_inst;
 
 
 })();

@@ -60,6 +60,7 @@ describe('object', function () {
 			let mocks = new mockset();
 			try {
 				let mock_obj = mocks.object(100);
+				throw new Error('exception should have been thrown');
 			} catch (err) {
 				if (/not an object/.exec(err))
 					done();
@@ -109,6 +110,7 @@ describe('object', function () {
 						});
 					let mm_obj = mocks.object(test_state_obj);
 					let mm_method = mm_obj.method(100);
+					throw new Error('exception should have been thrown');
 				} catch (err) {
 					if (/not a function/.exec(err))
 						done();
@@ -126,6 +128,7 @@ describe('object', function () {
 						});
 					let mm_obj = mocks.object(test_state_obj);
 					let mm_method = mm_obj.method('bar');
+					throw new Error('exception should have been thrown');
 				} catch (err) {
 					if (/not a function/.exec(err))
 						done();
@@ -239,7 +242,7 @@ describe('object', function () {
 				expect(mm_method.call_count()).toBe(1);
 			});
 
-			it('stops after mocks restore', function () {
+			it('stops after set restore', function () {
 				let mocks = new mockset();
 				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
 				let mm_method = mocks.o(test_state_obj).m('update');
@@ -288,6 +291,7 @@ describe('object', function () {
 				});
 				try {
 					test_state_obj.update({aa:'a3'});
+					throw new Error('exception should have been thrown');
 				} catch (err) {
 					if (/spidoodle/.exec(err))
 						done();

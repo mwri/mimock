@@ -20,18 +20,25 @@ module.exports = function(grunt) {
 			},
 		},
 
+		strip_code: {
+			options: {
+				blocks: [{
+					start_block: "/* test-code */",
+					end_block: "/* end-test-code */",
+				}],
+			},
+			your_target: {
+				src: "dist/*.js",
+			},
+		},
+
 		jshint: {
 			files: ['gruntfile.js', 'lib/**/*.js', 'test/**/*.js'],
 			options: {
 				esversion: 6,
 				laxbreak:  true,
 				'-W058':   true,
-				globals: {
-					jQuery:   true,
-					console:  true,
-					module:   true,
-					document: true,
-				},
+				validthis: true,
 			},
 		},
 
@@ -39,7 +46,7 @@ module.exports = function(grunt) {
 			es6: {
 				options: {
 					files: [
-						'test/**/*.js',
+						'test/!(lib).js',
 					],
 					basePath:    '',
 					urlRoot:     '/',
@@ -61,7 +68,7 @@ module.exports = function(grunt) {
 			travis_ci_es6: {
 				options: {
 					files: [
-						'test/**/*.js',
+						'test/!(lib).js',
 					],
 					basePath:    '',
 					urlRoot:     '/',
@@ -138,6 +145,7 @@ module.exports = function(grunt) {
 		'concat:es6',
 		'karma:es6',
 		'node_mocha:es6',
+		'strip_code',
 		]);
 
 	grunt.registerTask('travis_ci_build', [
@@ -145,6 +153,7 @@ module.exports = function(grunt) {
 		'concat:es6',
 		'karma:travis_ci_es6',
 		'node_mocha:es6',
+		'strip_code',
 		]);
 
 	grunt.registerTask('dev', [
