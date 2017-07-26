@@ -1,4 +1,4 @@
-// Package: mimock v0.2.0 (built 2017-07-25 13:50:21)
+// Package: mimock v0.2.0 (built 2017-07-26 13:19:11)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
@@ -234,6 +234,8 @@ let mimock_method = (function () {
 
 	};
 
+	mimock_method.prototype.w = mimock_method.prototype.wrap;
+
 
 	mimock_method.prototype.call_count = function () {
 
@@ -381,6 +383,8 @@ let mimock_fun = (function () {
 		return this;
 
 	};
+
+	mimock_fun.prototype.w = mimock_fun.prototype.wrap;
 
 
 	mimock_fun.prototype.call_count = function () {
@@ -564,9 +568,14 @@ let mimock_export = (function () {
 
 		this.wrap_funs.push(fun);
 
+		for (let i = 0; i < this.instances.length; i++)
+			this.instances[i].wrap.wrap(fun);
+
 		return this;
 
 	};
+
+	mimock_export.prototype.w = mimock_export.prototype.wrap;
 
 
 	mimock_export.prototype.call_count = function () {
@@ -590,7 +599,7 @@ let mimock_export = (function () {
 				call_hist.push(inst_call_hist[j]);
 		}
 
-		return call_hist;
+		return call_hist.sort(function (a, b) { return a.called > b.called; });
 
 	};
 

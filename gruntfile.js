@@ -46,7 +46,7 @@ module.exports = function(grunt) {
 			es6: {
 				options: {
 					files: [
-						'test/!(lib).js',
+						'test/!(lib|readme_lib).js',
 					],
 					basePath:    '',
 					urlRoot:     '/',
@@ -68,7 +68,7 @@ module.exports = function(grunt) {
 			travis_ci_es6: {
 				options: {
 					files: [
-						'test/!(lib).js',
+						'test/!(lib|readme_lib).js',
 					],
 					basePath:    '',
 					urlRoot:     '/',
@@ -122,7 +122,7 @@ module.exports = function(grunt) {
 				},
 				files: [
 					'lib/**/*.js',
-					'test/**/*.js',
+					'test/*.js',
 				],
 				tasks: ['build'],
 			},
@@ -132,7 +132,7 @@ module.exports = function(grunt) {
 				},
 				files: [
 					'lib/**/*.js',
-					'test/**/*.js',
+					'test/*.js',
 				],
 				tasks: ['dev'],
 			},
