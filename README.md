@@ -2,21 +2,21 @@
 
 Mimock (mini mock) is a small simple mocking library with a low learning curve.
 
-1. [Use guide](#Use-guide).
-   1. [Import](#Import).
-   2. [Creating a complete new object type](#Creating-a-complete-new-object-type).
-   3. [Object instrumentation](#Object-instrumentation).
-   4. [Object method wrapping](#Object-method-wrapping).
-      1. [Method stubbing wrappers](#Method-stubbing-wrappers).
-      2. [Method pass through wrappers](#Method-pass-through-wrappers).
-   5. [Layered wrappers](#Layered-wrappers).
-   6. [Wrapping a function](#Wrapping-a-function).
-   7. [Wrapping a module](#Wrapping-a-module).
-      1. [Modules exporting a function](#Modules-exporting-a-function).
-      2. [Modules exporting an object](#Modules-exporting-an-object).
-   8. [Module wrapping behaviours](#Module-wrapping-behaviours).
-2. [NodeJS and browser usage](#NodeJS-and-browser-usage).
-3. [Build](#Build).
+1. [Use guide](#use-guide).
+   1. [Import](#import).
+   2. [Creating a complete new object type](#creating-a-complete-new-object-type).
+   3. [Object instrumentation](#object-instrumentation).
+   4. [Object method wrapping](#object-method-wrapping).
+      1. [Method stubbing wrappers](#method-stubbing-wrappers).
+      2. [Method pass through wrappers](#method-pass-through-wrappers).
+   5. [Layered wrappers](#layered-wrappers).
+   6. [Wrapping a function](#wrapping-a-function).
+   7. [Wrapping a module](#wrapping-a-module).
+      1. [Modules exporting a function](#modules-exporting-a-function).
+      2. [Modules exporting an object](#modules-exporting-an-object).
+   8. [Module wrapping behaviours](#module-wrapping-behaviours).
+2. [NodeJS and browser usage](#nodejs-and-browser-usage).
+3. [Build](#build).
 
 ## Use guide
 
