@@ -95,23 +95,9 @@ module.exports = function(grunt) {
 			},
 		},
 
-		node_mocha: {
-			es6: {
-				src: ['test/**/*.js'],
-				options: {
-					slow: 3000,
-					timeout: 5000,
-					reportFormats:  ['lcov'],
-					runCoverage:    true,
-				},
-			},
-			es6_nocov: {
-				src:  ['test/**/*.js'],
-				options: {
-					slow:      3000,
-					timeout:   5000,
-					fullTrace: true,
-				},
+		mocha_istanbul: {
+			all: {
+				src: ['test/*.js'],
 			},
 		},
 
@@ -144,7 +130,7 @@ module.exports = function(grunt) {
 		'jshint',
 		'concat:es6',
 		'karma:es6',
-		'node_mocha:es6',
+		'mocha_istanbul',
 		'strip_code',
 		]);
 
@@ -152,14 +138,14 @@ module.exports = function(grunt) {
 		'jshint',
 		'concat:es6',
 		'karma:travis_ci_es6',
-		'node_mocha:es6',
+		'mocha_istanbul',
 		'strip_code',
 		]);
 
 	grunt.registerTask('dev', [
 		'jshint',
 		'concat:es6',
-		'node_mocha:es6_nocov',
+		'mocha_istanbul',
 		]);
 
 	grunt.registerTask('default', ['build']);
