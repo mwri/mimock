@@ -136,7 +136,8 @@ describe('readme', function () {
 
 		let mocks = new mockset();
 
-		let some_method = mocks.object(some_object).method('some_method').wrap(function () {
+		let some_method = mocks.object(some_object).method('some_method');
+		some_method.wrap(function () {
 			return 30;
 		});
 
@@ -150,7 +151,8 @@ describe('readme', function () {
 
 		let mocks = new mockset();
 
-		let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+		let some_method = mocks.object(some_object).method('some_method');
+		some_method.wrap(function (helper) {
 			return helper.continue();
 		});
 
@@ -164,7 +166,8 @@ describe('readme', function () {
 
 		let mocks = new mockset();
 
-		let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+		let some_method = mocks.object(some_object).method('some_method');
+		some_method.wrap(function (helper) {
 			helper.args[0] *= 10;
 			return helper.continue();
 		});
@@ -179,7 +182,8 @@ describe('readme', function () {
 
 		let mocks = new mockset();
 
-		let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+		let some_method = mocks.object(some_object).method('some_method');
+		some_method.wrap(function (helper) {
 			if (helper.args[0] === 'dog')
 				throw new Error('dogs not allowed');
 			return helper.continue();
@@ -205,11 +209,34 @@ describe('readme', function () {
 
 		let mocks = new mockset();
 
-		let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+		let some_method = mocks.object(some_object).method('some_method');
+		some_method.wrap(function (helper) {
 			return helper.continue() * 5;
 		});
 
 		expect(some_object.some_method(15)).toBe(75);
+
+		mocks.restore();
+
+	});
+
+	it('fun wrap', function () {
+
+		let mocks = new mockset();
+
+		function get_callback () {
+			return function () {};
+		}
+
+		let orig_fun = get_callback();
+		let some_fun_mock = mocks.fun(orig_fun);
+
+		let new_fun = some_fun_mock.replacement();
+		let fun_wrap = some_fun_mock.wrap(function (helper) {
+			return helper.continue();
+		});
+		new_fun();
+		expect(some_fun_mock.call_count()).toBe(1);
 
 		mocks.restore();
 

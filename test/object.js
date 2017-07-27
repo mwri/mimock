@@ -258,31 +258,35 @@ describe('object', function () {
 
 		describe('wrap', function () {
 
-			it('is called', function (done) {
+			it('is called', function () {
 				let mocks = new mockset();
 				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
 				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
 				mm_method.wrap(function () {
-					done();
+					wrap_seen++;
 				});
 				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
 				mocks.restore();
 			});
 
-			it('stub masks real', function (done) {
+			it('stub masks real', function () {
 				let mocks = new mockset();
 				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
 				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
 				mm_method.wrap(function () {
-					done();
+					wrap_seen++;
 					return 10;
 				});
 				expect(test_state_obj.update({aa:'a3'})).toBe(10);
+				expect(wrap_seen).toBe(1);
 				expect(test_state_obj.aa).toBe('a1');
 				mocks.restore();
 			});
 
-			it('exception is propogated', function (done) {
+			it('exception is propogated', function () {
 				let mocks = new mockset();
 				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
 				let mm_method = mocks.o(test_state_obj).m('update');
@@ -293,12 +297,104 @@ describe('object', function () {
 					test_state_obj.update({aa:'a3'});
 					throw new Error('exception should have been thrown');
 				} catch (err) {
-					if (/spidoodle/.exec(err))
-						done();
-					else
+					if (!/spidoodle/.exec(err))
 						throw err;
 				}
 				mocks.restore();
+			});
+
+			it('stops after unwrap', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
+				let wrap_fun = function () { wrap_seen++; };
+				mm_method.wrap(wrap_fun);
+				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
+				expect(mm_method.unwrap(wrap_fun)).toBe(1);
+				test_state_obj.update({aa:'a4'});
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('alien function unwrap ignored', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
+				let wrap_fun = function () { wrap_seen++; };
+				mm_method.wrap(wrap_fun);
+				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
+				expect(mm_method.unwrap(function () { })).toBe(0);
+				test_state_obj.update({aa:'a4'});
+				expect(wrap_seen).toBe(2);
+				mocks.restore();
+			});
+
+			it('stops after wrap restore', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
+				let mm_restorable = mm_method.wrap(function () {
+					wrap_seen++;
+				});
+				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
+				mm_restorable.restore();
+				test_state_obj.update({aa:'a4'});
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after method', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
+				let mm_restorable = mm_method.wrap(function () {
+					wrap_seen++;
+				});
+				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
+				mm_method.restore();
+				test_state_obj.update({aa:'a4'});
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after object restore', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_object = mocks.o(test_state_obj);
+				let mm_method = mm_object.m('update');
+				let wrap_seen = 0;
+				let mm_restorable = mm_method.wrap(function () {
+					wrap_seen++;
+				});
+				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
+				mm_object.restore();
+				test_state_obj.update({aa:'a4'});
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after set restore', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_method = mocks.o(test_state_obj).m('update');
+				let wrap_seen = 0;
+				let mm_restorable = mm_method.wrap(function () {
+					wrap_seen++;
+				});
+				test_state_obj.update({aa:'a3'});
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+				test_state_obj.update({aa:'a4'});
+				expect(wrap_seen).toBe(1);
 			});
 
 		});

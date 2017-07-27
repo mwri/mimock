@@ -55,7 +55,8 @@ describe('readme', function () {
 		let test_locks_method;
 		root_export.wrap(function (helper) {
 			let new_obj = helper.continue();
-			test_locks_method = mocks.o(new_obj).m('test_locks').w(function (helper) {
+			test_locks_method = mocks.o(new_obj).m('test_locks');
+			test_locks_method.w(function (helper) {
 				throw new Error('gotcha');
 			});
 			return new_obj;

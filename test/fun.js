@@ -181,6 +181,92 @@ describe('function', function () {
 			mocks.restore();
 		});
 
+		it('stops after unwrap', function () {
+			let mocks = new mockset();
+			let test_fun1 = function (a) { return a * 2; };
+			let mm_fun1 = mocks.f(test_fun1);
+			let replacement_fun1 = mm_fun1.replacement();
+			let wrap_seen = 0;
+			let wrap_fun = function () {
+				wrap_seen++;
+			};
+			mm_fun1.wrap(wrap_fun);
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			expect(mm_fun1.unwrap(wrap_fun)).toBe(1);
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			mocks.restore();
+		});
+
+		it('alien function unwrap ignored', function () {
+			let mocks = new mockset();
+			let test_fun1 = function (a) { return a * 2; };
+			let mm_fun1 = mocks.f(test_fun1);
+			let replacement_fun1 = mm_fun1.replacement();
+			let wrap_seen = 0;
+			let wrap_fun = function () {
+				wrap_seen++;
+			};
+			mm_fun1.wrap(wrap_fun);
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			expect(mm_fun1.unwrap(function non_wrap () {})).toBe(0);
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(2);
+			mocks.restore();
+		});
+
+		it('stops after wrap restore', function () {
+			let mocks = new mockset();
+			let test_fun1 = function (a) { return a * 2; };
+			let mm_fun1 = mocks.f(test_fun1);
+			let replacement_fun1 = mm_fun1.replacement();
+			let wrap_seen = 0;
+			let mm_restorable = mm_fun1.wrap(function () {
+				wrap_seen++;
+			});
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			mm_restorable.restore();
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			mocks.restore();
+		});
+
+		it('stops after fun restore', function () {
+			let mocks = new mockset();
+			let test_fun1 = function (a) { return a * 2; };
+			let mm_fun1 = mocks.f(test_fun1);
+			let replacement_fun1 = mm_fun1.replacement();
+			let wrap_seen = 0;
+			let mm_restorable = mm_fun1.wrap(function () {
+				wrap_seen++;
+			});
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			mm_fun1.restore();
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			mocks.restore();
+		});
+
+		it('stops after set restore', function () {
+			let mocks = new mockset();
+			let test_fun1 = function (a) { return a * 2; };
+			let mm_fun1 = mocks.f(test_fun1);
+			let replacement_fun1 = mm_fun1.replacement();
+			let wrap_seen = 0;
+			let mm_restorable = mm_fun1.wrap(function () {
+				wrap_seen++;
+			});
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+			mocks.restore();
+			replacement_fun1(0);
+			expect(wrap_seen).toBe(1);
+		});
+
 	});
 
 });

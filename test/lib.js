@@ -608,6 +608,119 @@ describe('lib', function () {
 				mocks.restore();
 			});
 
+			it('stops after unwrap', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				let wrap_seen = 0;
+				let wrap_fun = function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				};
+				root_export.wrap(wrap_fun);
+				let polylock = require('polylock');
+				let locks = new polylock();
+				expect(wrap_seen).toBe(1);
+				expect(root_export.unwrap(wrap_fun)).toBe(1);
+				locks = new polylock();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('alien function unwrap ignored', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				let wrap_seen = 0;
+				let wrap_fun = function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				};
+				root_export.wrap(wrap_fun);
+				let polylock = require('polylock');
+				let locks = new polylock();
+				expect(wrap_seen).toBe(1);
+				expect(root_export.unwrap(function () {})).toBe(0);
+				locks = new polylock();
+				expect(wrap_seen).toBe(2);
+				mocks.restore();
+			});
+
+			it('stops after wrap restore', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				let wrap_seen = 0;
+				let mm_restorable = root_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let polylock = require('polylock');
+				let locks = new polylock();
+				expect(typeof locks).toBe('object');
+				expect(wrap_seen).toBe(1);
+				mm_restorable.restore();
+				locks = new polylock();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after export restore', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				let wrap_seen = 0;
+				root_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let polylock = require('polylock');
+				let locks = new polylock();
+				expect(typeof locks).toBe('object');
+				expect(wrap_seen).toBe(1);
+				root_export.restore();
+				locks = new polylock();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after lib restore', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				let wrap_seen = 0;
+				root_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let polylock = require('polylock');
+				let locks = new polylock();
+				expect(typeof locks).toBe('object');
+				expect(wrap_seen).toBe(1);
+				polylock_lib.restore();
+				locks = new polylock();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after set restore', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				let wrap_seen = 0;
+				root_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let polylock = require('polylock');
+				let locks = new polylock();
+				expect(typeof locks).toBe('object');
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+				locks = new polylock();
+				expect(wrap_seen).toBe(1);
+			});
+
 		});
 
 		describe('with module.exports object sub constructor', function () {
@@ -631,6 +744,101 @@ describe('lib', function () {
 				basic_object = new testob_basic();
 				expect(wrap_seen).toBe(2);
 				mocks.restore();
+			});
+
+			it('stops after unwrap', function () {
+				let mocks = new mockset();
+				let testob_lib = mocks.l('testob');
+				let basic_export = testob_lib.e('basic');
+				let wrap_seen = 0;
+				let wrap_fun = function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				};
+				basic_export.wrap(wrap_fun);
+				let testob = require('testob');
+				let testob_basic = testob.basic;
+				let basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				basic_export.unwrap(wrap_fun);
+				basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after wrap restore', function () {
+				let mocks = new mockset();
+				let testob_lib = mocks.l('testob');
+				let basic_export = testob_lib.e('basic');
+				let wrap_seen = 0;
+				let mm_restorable = basic_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let testob = require('testob');
+				let testob_basic = testob.basic;
+				let basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				mm_restorable.restore();
+				basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after export restore', function () {
+				let mocks = new mockset();
+				let testob_lib = mocks.l('testob');
+				let basic_export = testob_lib.e('basic');
+				let wrap_seen = 0;
+				let mm_restorable = basic_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let testob = require('testob');
+				let testob_basic = testob.basic;
+				let basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				basic_export.restore();
+				basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after lib restore', function () {
+				let mocks = new mockset();
+				let testob_lib = mocks.l('testob');
+				let basic_export = testob_lib.e('basic');
+				let wrap_seen = 0;
+				let mm_restorable = basic_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let testob = require('testob');
+				let testob_basic = testob.basic;
+				let basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				testob_lib.restore();
+				basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+			});
+
+			it('stops after set restore', function () {
+				let mocks = new mockset();
+				let testob_lib = mocks.l('testob');
+				let basic_export = testob_lib.e('basic');
+				let wrap_seen = 0;
+				let mm_restorable = basic_export.wrap(function (helper) {
+					wrap_seen++;
+					return helper.continue();
+				});
+				let testob = require('testob');
+				let testob_basic = testob.basic;
+				let basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
+				mocks.restore();
+				basic_object = new testob_basic();
+				expect(wrap_seen).toBe(1);
 			});
 
 		});

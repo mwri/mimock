@@ -160,7 +160,8 @@ instead of `wrap`):
 ```javascript
 let mocks = new mockset();
 
-let some_method = mocks.object(some_object).method('some_method').wrap(function () {
+let some_method = mocks.object(some_object).method('some_method');
+let wrap = some_method.wrap(function () {
     return 30;
 });
 
@@ -179,7 +180,8 @@ completely benign wrapper could be applied like this therefore:
 ```javascript
 let mocks = new mockset();
 
-let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+let some_method = mocks.object(some_object).method('some_method');
+some_method.wrap(function (helper) {
     return helper.continue();
 });
 
@@ -197,7 +199,8 @@ by ten, you could do this:
 ```javascript
 let mocks = new mockset();
 
-let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+let some_method = mocks.object(some_object).method('some_method');
+some_method.wrap(function (helper) {
     helper.args[0] *= 10;
     return helper.continue();
 });
@@ -210,7 +213,8 @@ Or you could throw an exception if the second argument is equal "dog":
 ```javascript
 let mocks = new mockset();
 
-let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+let some_method = mocks.object(some_object).method('some_method');
+some_method.wrap(function (helper) {
     if (helper.args[0] === 'dog')
         throw new Error('dogs not allowed');
     return helper.continue();
@@ -225,16 +229,20 @@ is multipled by five:
 ```javascript
 let mocks = new mockset();
 
-let some_method = mocks.object(some_object).method('some_method').wrap(function (helper) {
+let some_method = mocks.object(some_object).method('some_method');
+let wrap = some_method.wrap(function (helper) {
     return helper.continue() * 5;
 });
 
 mocks.restore();
 ```
 
-The wrapper can be cancelled, restoring the target function to normal
-service, either by calling `some_method.restore()`, or `mocks.restore()`
-will cancel all wrappers, and anything else, done with `mocks`.
+The wrapper can be cancelled. Calling `mocks.restore()` will cancel
+everything created with the `mocks` object, `some_method.unwrap(function)`
+or `wrap.restore()` will remove just that wrapper function, leaving
+any other wraps and instrumentation operable, or `some_method.restore()`
+will return that method to original service (all wrappers removed and
+no instrumentation).
 
 ### Layered wrappers
 
@@ -258,7 +266,7 @@ substituted:
 let mocks = new mockset();
 
 let orig_fun = get_callback();
-let some_fun_mock = mocks.fun(fun)
+let some_fun_mock = mocks.fun(orig_fun)
 ```
 
 Calling `replacement()` will provide a replacement function which passes
@@ -266,6 +274,9 @@ control to the original after instrumentation:
 
 ```javascript
 let new_fun = some_fun_mock.replacement();
+let fun_wrap = some_fun_mock.wrap(function (helper) {
+    return helper.continue();
+});
 new_fun();
 expect(some_fun_mock.call_count()).toBe(1);
 
@@ -275,8 +286,10 @@ mocks.restore();
 The call history (when, args, return value, etc) is also available by
 calling `calls()`.
 
-Instrumentation can be restored by calling `mocks.restore()` or
-`some_fun_mock.restore()`.
+Instrumentation and all wraps are cancelled by calling
+`some_fun_mock.restore()`, that one wrap can be removed with
+`some_fun_mock.unwrap(function)` or `fun_wrap.restore()`, or everything
+done with `mocks` can be cancelled with `mocks.restore()`.
 
 ### Wrapping a module
 
@@ -345,7 +358,8 @@ let polylock = require('polylock');
 let test_locks_method;
 root_export.wrap(function (helper) {
     let new_obj = helper.continue();
-	test_locks_method = mocks.o(new_obj).m('test_locks').w(function (helper) {
+	test_locks_method = mocks.o(new_obj).m('test_locks');
+    test_locks_method.w(function (helper) {
         throw new Error('gotcha');
 	});
 	return new_obj
