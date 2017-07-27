@@ -1,12 +1,12 @@
 {
   "name": "mimock",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "license": "MIT",
   "author": {
     "name": "Michael Wright",
     "email": "mjw@methodanalysis.com"
   },
-  "description": "mimock (mini mock, a mocking library)",
+  "description": "mimock (mini mock), a mocking library)",
   "devDependencies": {
     "babel-preset-es2015": "^6.24.1",
     "chai-jasmine": "^1.0.7",

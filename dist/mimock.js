@@ -1,4 +1,4 @@
-// Package: mimock v0.5.1 (built 2017-07-27 14:14:23)
+// Package: mimock v0.6.0 (built 2017-07-27 14:17:59)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
