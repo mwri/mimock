@@ -84,7 +84,7 @@ original state just by calling `restore()` on it.
 ### Object instrumentation
 
 You can instrument an object method like this (`o` can be used instead
-of `object and `m` instead of `method`):
+of object and `m` instead of `method`):
 
 ```javascript
 let mocks = new mockset();
