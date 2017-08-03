@@ -95,6 +95,13 @@ module.exports = function(grunt) {
 			},
 		},
 
+		simplemocha: {
+			all: {
+				src: ['test/*.js'],
+			},
+		},
+
+
 		mocha_istanbul: {
 			all: {
 				src: ['test/*.js'],
@@ -145,7 +152,7 @@ module.exports = function(grunt) {
 	grunt.registerTask('dev', [
 		'jshint',
 		'concat:es6',
-		'mocha_istanbul',
+		'simplemocha',
 		]);
 
 	grunt.registerTask('default', ['build']);

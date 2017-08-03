@@ -1,4 +1,4 @@
-// Package: mimock v0.6.1 (built 2017-07-28 11:26:45)
+// Package: mimock v0.6.1 (built 2017-08-03 20:29:05)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
@@ -17,6 +17,7 @@ let mimock_mockset = (function () {
 		this.mm_objs = [];
 		this.mm_libs = [];
 		this.mm_funs = [];
+		this.data    = {};
 
 	};
 
@@ -182,6 +183,7 @@ let mimock_method = (function () {
 		this.wrap_chain  = [];
 		this.call_hist   = [];
 		this.active      = true;
+		this.data        = {};
 
 		let mm_method = this;
 		raw_obj[this.method_name] = function () {
@@ -199,7 +201,9 @@ let mimock_method = (function () {
 			args:   args,
 			};
 
-		let helper = new mimock_wrap_helper(this_bind, args, as_cons, this.wrap_chain, this.orig_fun);
+		let helper = new mimock_wrap_helper(
+			this_bind, args, as_cons, this.wrap_chain, this.orig_fun, this.mm_set, this.data
+			);
 
 		if (!this.active)
 			return helper.continue();
@@ -227,6 +231,9 @@ let mimock_method = (function () {
 
 
 	mimock_method.prototype.wrap = function (wrap_fun) {
+
+		if (!this.active)
+			throw new Error('method is restored; no longer active');
 
 		this.wrap_chain.push(wrap_fun);
 
@@ -290,8 +297,8 @@ let mimock_wrap_helper = (function () {
 
 
 	let mimock_wrap_helper = function mimock_wrap_helper (
-			this_bind, args, as_cons,
-			wrap_chain, orig_fun
+			this_bind, args, as_cons, wrap_chain, orig_fun,
+			mm_set, data
 			) {
 
 		this.this_bind  = this_bind;
@@ -300,6 +307,8 @@ let mimock_wrap_helper = (function () {
 		this.wrap_chain = wrap_chain;
 		this.wrap_num   = wrap_chain.length;
 		this.orig_fun   = orig_fun;
+		this.mockset    = mm_set;
+		this.data       = data;
 
 	};
 
@@ -319,7 +328,9 @@ let mimock_wrap_helper = (function () {
 
 		this.wrap_num--;
 
-		return this.wrap_chain[this.wrap_num].apply(this.this_bind, [this]);
+		this.wrap_fun = this.wrap_chain[this.wrap_num];
+
+		return this.wrap_fun.apply(this.this_bind, [this]);
 
 	};
 
@@ -340,6 +351,7 @@ let mimock_fun = (function () {
 		this.wrap_chain = [];
 		this.call_hist  = [];
 		this.active     = true;
+		this.data       = {};
 
 		let mm_fun = this;
 		this.repl_fun = function () {
@@ -359,7 +371,9 @@ let mimock_fun = (function () {
 
 	mimock_fun.prototype.entry = function (this_bind, args, as_cons) {
 
-		let helper = new mimock_wrap_helper(this_bind, args, as_cons, this.wrap_chain, this.orig_fun);
+		let helper = new mimock_wrap_helper(
+			this_bind, args, as_cons, this.wrap_chain, this.orig_fun, this.mm_set, this.data
+			);
 
 		if (!this.active)
 			return helper.continue();
@@ -393,6 +407,9 @@ let mimock_fun = (function () {
 
 
 	mimock_fun.prototype.wrap = function (wrap_fun) {
+
+		if (!this.active)
+			throw new Error('function is restored; no longer active');
 
 		this.wrap_chain.push(wrap_fun);
 
@@ -465,9 +482,15 @@ let mimock_lib = (function () {
 
 			if (module_info.moduleId === lib_path) {
 				this.req_count++;
-				let inst = new mimock_lib_inst(this, module_exports);
+				let inst;
+				for (let i = 0; i < this.instances.length; i++)
+					if (this.instances[i].orig_exports === module_exports)
+						inst = this.instances[i];
+				if (typeof inst === 'undefined') {
+					inst = new mimock_lib_inst(this, module_exports);
+					this.instances.push(inst);
+				}
 				module_exports = inst.module_exports();
-				this.instances.push(inst);
 			}
 
 			return module_exports;
@@ -537,6 +560,7 @@ let mimock_lib_inst = (function () {
 
 		this.inst_of      = mm_lib;
 		this.export_insts = [];
+		this.orig_exports = module_exports;
 		this.repl_exports = module_exports;
 
 		for (let i = 0; i < mm_lib.mm_exports.length; i++) {
@@ -597,6 +621,9 @@ let mimock_export = (function () {
 
 
 	mimock_export.prototype.wrap = function (wrap_fun) {
+
+		if (!this.active)
+			throw new Error('export is restored; no longer active');
 
 		this.wrap_funs.push(wrap_fun);
 

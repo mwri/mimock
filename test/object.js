@@ -397,6 +397,21 @@ describe('object', function () {
 				expect(wrap_seen).toBe(1);
 			});
 
+			it('throws error after restored', function () {
+				let mocks = new mockset();
+				let test_state_obj = new state_obj({aa:'a1',ab:'a2'});
+				let mm_method = mocks.o(test_state_obj).m('update');
+				mm_method.wrap(function (helper) { return helper.continue(); });
+				mm_method.restore();
+				try {
+					mm_method.wrap(function (helper) { return helper.continue(); });
+					throw new Error('should have thrown exception');
+				} catch (err) {
+					if (!/method is restored/.exec(err))
+						throw err;
+				}
+			});
+
 		});
 
 	});

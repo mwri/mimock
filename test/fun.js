@@ -267,6 +267,21 @@ describe('function', function () {
 			expect(wrap_seen).toBe(1);
 		});
 
+		it('throws error after restored', function () {
+			let mocks = new mockset();
+			let fun = function (a) { return a * 2; };
+			let mm_fun = mocks.f(fun);
+			mm_fun.wrap(function (helper) { return helper.continue(); });
+			mm_fun.restore();
+			try {
+				mm_fun.wrap(function (helper) { return helper.continue(); });
+				throw new Error('should have thrown exception');
+			} catch (err) {
+				if (!/function is restored/.exec(err))
+					throw err;
+			}	   
+		}); 
+
 	});
 
 });

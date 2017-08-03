@@ -132,6 +132,27 @@ describe('lib', function () {
 			mocks.restore();
 		});
 
+		it('instance is per modules.export (same export)', function () {
+			let mocks = new mockset();
+			let testob_lib = mocks.l('testob');
+			let testob1 = require('testob');
+			let testob2 = require('testob');
+			expect(testob_lib.require_count()).toBe(2);
+			expect(testob1).toBe(testob2);
+			mocks.restore();
+		});
+
+		it('instance is per modules.export (different export)', function () {
+			let mocks = new mockset();
+			let enc_lib = mocks.l('./node_modules/export_non_constructors.js');
+			let enc1 = require('./node_modules/export_non_constructors.js');
+			delete require.cache[require.resolve('./node_modules/export_non_constructors.js')];
+			let enc2 = require('./node_modules/export_non_constructors.js');
+			expect(enc_lib.require_count()).toBe(2);
+			expect(enc1).not.toBe(enc2);
+			mocks.restore();
+		});
+
 		it('require count work (multiple libs)', function () {
 			let mocks = new mockset();
 			let testob_lib = mocks.l('testob');
@@ -719,6 +740,21 @@ describe('lib', function () {
 				mocks.restore();
 				locks = new polylock();
 				expect(wrap_seen).toBe(1);
+			});
+
+			it('throws error after restored', function () {
+				let mocks = new mockset();
+				let polylock_lib = mocks.l('polylock');
+				let root_export = polylock_lib.e();
+				root_export.wrap(function (helper) { return helper.continue(); });
+				root_export.restore();
+				try {
+					root_export.wrap(function (helper) { return helper.continue(); });
+					throw new Error('should have thrown exception');
+				} catch (err) {
+					if (!/export is restored/.exec(err))
+						throw err;
+				}
 			});
 
 		});
