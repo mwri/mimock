@@ -1,4 +1,4 @@
-// Package: mimock v0.6.1 (built 2017-08-03 20:29:05)
+// Package: mimock v1.0.0 (built 2018-02-11 23:58:37)
 // Copyright: (C) 2017 Michael Wright <mjw@methodanalysis.com>
 // License: MIT
 
@@ -725,8 +725,6 @@ let mimock_export_inst = (function () {
 
 		if (mm_export.wrap_funs.length === 0)
 			return;
-
-		let mm_export_inst = this;
 
 		for (let i = 0; i < mm_export.wrap_funs.length; i++)
 			wrap.wrap(mm_export.wrap_funs[i]);
