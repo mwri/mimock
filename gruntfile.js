@@ -131,10 +131,15 @@ module.exports = function(grunt) {
 			},
 		},
 
+		eslint: {
+			target: ['lib'],
+		},
+
 	});
 
 	grunt.registerTask('build', [
 		'jshint',
+		'eslint',
 		'concat:es6',
 		'karma:es6',
 		'mocha_istanbul',
@@ -143,6 +148,7 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('travis_ci_build', [
 		'jshint',
+		'eslint',
 		'concat:es6',
 		'karma:travis_ci_es6',
 		'mocha_istanbul',
