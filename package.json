@@ -1,6 +1,6 @@
 {
   "name": "mimock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "author": {
     "name": "Michael Wright",
@@ -33,7 +33,7 @@
     "test": "./node_modules/.bin/mocha --require @babel/register",
     "coverage": "./node_modules/.bin/nyc --reporter=html --reporter=text --reporter=lcov ./node_modules/.bin/mocha --require @babel/register"
   },
-  "main": "dist/mimock.js",
+  "main": "lib/mimock.js",
   "directories": {
     "lib": "lib",
     "test": "test"
