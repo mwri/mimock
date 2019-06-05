@@ -15,8 +15,6 @@ Mimock (mini mock) is a small simple mocking library with a low learning curve.
       1. [Modules exporting a function](#modules-exporting-a-function).
       2. [Modules exporting an object](#modules-exporting-an-object).
    8. [Module wrapping behaviours](#module-wrapping-behaviours).
-2. [NodeJS and browser usage](#nodejs-and-browser-usage).
-3. [Build](#build).
 
 ## Use guide
 
@@ -293,8 +291,6 @@ done with `mocks` can be cancelled with `mocks.restore()`.
 
 ### Wrapping a module
 
-This functionality works for NodeJS but is not available in the browser.
-
 If you want to wrap a function on an object that another function creates
 that's a bit of a problem, because you never get your hands on the object
 to instrument or wrapper it. You can solve this (probably) by wrapping the
@@ -430,20 +426,3 @@ functions can be changed later, substituted within the object, but where
 a module exports a function, this can't be done... so the function is
 wrapped regardless so that later a call to `lib.e(undefined)` will work
 as well as `lib.e('name_of_function')`.
-
-## NodeJS and browser usage
-
-The module wrapping functionality is not available in the browser but all
-other features are compatible.
-
-## Build
-
-run `npm install` to install the dev/build dependencies, and
-`grunt build` to build.
-
-This will build `dist/mimock.js` and run the unit tests in a webpack bundle
-using Chrome, and again via mocha.
-
-Running `grunt watch_dev` will invoke the most light weight possible file
-watch lint build and test cycle (using mocha). Running `grunt watch_full`
-will watch for file changes and do a full build including coverage reports.

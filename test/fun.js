@@ -7,8 +7,7 @@
 let mimock  = require('./../dist/mimock.js');
 let mockset = mimock.mockset;
 
-if (typeof window === 'undefined')
-	require('chai-jasmine');
+let chai_jasmine = require('chai-jasmine');
 
 
 describe('function', function () {
